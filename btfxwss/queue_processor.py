@@ -178,6 +178,7 @@ class QueueProcessor(Thread):
             identifier = (channel_name, symbol, config['key'].split(':')[1])
         else:
             identifier = (channel_name, symbol)
+        # Looks like bug, last assigment to chaneel_handlers was meaningless
         self.channel_handlers[channel_id] = identifier
         self.channel_directory[identifier] = channel_id
         self.channel_directory[channel_id] = identifier

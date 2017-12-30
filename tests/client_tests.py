@@ -15,7 +15,7 @@ class BtfxWssTests(TestCase):
     def test_subscribing_to_data_works(self):
         wss = BtfxWss(log_level=logging.DEBUG)
         wss.start()
-        time.sleep(1)
+        time.sleep(5)
         wss.subscribe_to_ticker('BTCUSD')
         wss.subscribe_to_candles('BTCUSD')
         wss.subscribe_to_order_book('BTCUSD')
