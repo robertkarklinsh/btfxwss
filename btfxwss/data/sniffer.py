@@ -28,7 +28,9 @@ class Sniffer(QueueProcessor):
 
 
 if __name__ == "__main__":
-    engine = create_engine('sqlite:////home/robert/PyProjects/btfxwss/tests/foo.bd', echo=True)
+    # engine = create_engine('sqlite:////home/robert/PyProjects/btfxwss/tests/foo.bd', echo=True)
+    engine = create_engine('postgresql://robertkarklinsh:onnkzuha26@35.198.127.49:5432/bitfinex', echo=True)
+
     candle_writer = CandleWriter(engine)
     time.sleep(1)
     sniffer = Sniffer(candle_writer, None)
@@ -37,11 +39,8 @@ if __name__ == "__main__":
     time.sleep(1)
     client.subscribe_to_candles('BTCUSD')
     client.subscribe_to_candles('ETHUSD')
-    client.subscribe_to_candles('XRPUSD')
-    client.subscribe_to_candles('XMRUSD')
-    client.subscribe_to_candles('IOTAUSD')
     client.subscribe_to_candles('OMGUSD')
-    client.subscribe_to_candles('EDOUSD')
+    client.subscribe_to_candles('IOTAUSD')
     try:
         while True:
             time.sleep(10)
