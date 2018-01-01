@@ -1,0 +1,17 @@
+ERROR:btfxwss.client:Cannot call subscribe_to_candles() on unestablished connection!
+DEBUG:btfxwss.connection:run(): Starting up..
+DEBUG:btfxwss.connection:_connect(): Initializing Connection..
+DEBUG:btfxwss.connection:_connect(): Starting Connection..
+INFO:btfxwss.connection:Connection Error - [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed (_ssl.c:645)
+INFO:btfxwss.connection:Connection closed
+DEBUG:btfxwss.connection:_stop_timers(): Timers stopped.
+INFO:btfxwss.connection:Attempting to connect again in 10 seconds.
+ERROR:btfxwss.client:Cannot call subscribe_to_ticker() on unestablished connection!
+ERROR:btfxwss.client:Cannot call subscribe_to_candles() on unestablished connection!
+ERROR:btfxwss.client:Cannot call subscribe_to_order_book() on unestablished connection!
+ERROR:btfxwss.client:Cannot call subscribe_to_raw_order_book() on unestablished connection!
+ERROR:btfxwss.client:Cannot call subscribe_to_trades() on unestablished connection!
+INFO:btfxwss.connection:Connection Error - [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed (_ssl.c:645)
+INFO:btfxwss.connection:Connection closed
+DEBUG:btfxwss.connection:_stop_timers(): Timers stopped.
+INFO:btfxwss.connection:Attempting to connect again in 10 seconds.
