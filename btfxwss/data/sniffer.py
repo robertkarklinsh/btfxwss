@@ -46,7 +46,7 @@ if __name__ == "__main__":
     try:
         while True:
             time.sleep(10)
-            client.queue_processor.candle_writer.commit()
+            candle_writer.commit()
     except KeyboardInterrupt as e:
         logging.debug(str(e) + '\n' + 'Exiting...')
         client.stop()
