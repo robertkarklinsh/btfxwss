@@ -26,22 +26,19 @@ class CandleWriter(object):
         Session = sessionmaker(bind=engine)
         self.session = Session()
 
-
-    def write(self, symbol, data, local=False):
+    def write(self, symbol, data):
         '''
         :param symbol: string
         :param data: [milliseconds since Epoch (integer), open (float), close (float), high (float), low (float), volume (float)]
-        :param local:
         :return:
         '''
 
         # Check for sqllite
         for chunk in data:
-            if local is True:
-                timestamp = datetime.datetime.fromtimestamp(chunk[0] / 1000)
+            timestamp = datetime.datetime.fromtimestamp(chunk[0] / 1000)
 
-            new_ohlcv = OHLCV(timestamp=timestamp, symbol=symbol, open=chunk[1], high=chunk[3],
-                          low=chunk[4], close=chunk[2], volume=chunk[5])
+            new_ohlcv = OHLCV(timestamp=timestamp, symbol=symbol, open=float(chunk[1]), high=float(chunk[3]),
+                              low=float(chunk[4]), close=float(chunk[2]), volume=float(chunk[5]))
 
             self.session.add(new_ohlcv)
 
