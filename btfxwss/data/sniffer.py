@@ -14,6 +14,7 @@ class Sniffer(QueueProcessor):
     def __init__(self, data_q = None):
         super().__init__(data_q)
         self.candle_handlers = []
+        self.timestamp_index = None
 
     def _handle_candles(self, dtype, data, ts):
         self.log.debug("_handle_candles: %s - %s - %s", dtype, data, ts)
@@ -21,7 +22,11 @@ class Sniffer(QueueProcessor):
         payload = np.array(payload)
         # check for data containing single entity:
         if len(payload.shape) != 2:
-            payload = payload.reshape((1,-1))
+            if self.timestamp_index is None or int(self.timestamp_index) < int(payload[0]):
+                self.timestamp_index = payload[0]
+                payload = payload.reshape((1,-1))
+            else:
+                return
         identifier = self.channel_directory[channel_id]
         symbol = identifier[1]
         for handler in self.candle_handlers:
