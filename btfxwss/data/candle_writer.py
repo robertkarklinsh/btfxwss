@@ -37,8 +37,11 @@ class CandleWriter(object):
         for chunk in data:
             timestamp = datetime.datetime.fromtimestamp(chunk[0] / 1000)
 
-            new_ohlcv = OHLCV(timestamp=timestamp, symbol=symbol, open=float(chunk[1]), high=float(chunk[3]),
-                              low=float(chunk[4]), close=float(chunk[2]), volume=float(chunk[5]))
+            # new_ohlcv = OHLCV(timestamp=timestamp, symbol=symbol, open=float(chunk[1]), high=float(chunk[3]),
+            #                   low=float(chunk[4]), close=float(chunk[2]), volume=float(chunk[5]))
+
+            new_ohlcv = OHLCV(timestamp=timestamp, symbol=symbol, open=float(chunk[1]), high=float(chunk[2]),
+                              low=float(chunk[3]), close=float(chunk[4]), volume=float(chunk[5]))
 
             self.session.add(new_ohlcv)
 
