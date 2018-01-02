@@ -31,6 +31,27 @@ class KieraBot(telegram.Bot, QueueProcessor):
         self.chat_id = update.message.chat_id
         bot.send_message(chat_id=update.message.chat_id, text="Hi Robert! Today smells like honey.")
 
+    def _handle_ticker(self, dtype, data, ts):
+        self.log.debug("_handle_ticker: %s - %s - %s", dtype, data, ts)
+        # payload: [bid, bid_size, ask, ask_size, daily_change, daily_change_percent, last_price, volume, high, low]
+        channel_id, payload = data
+        identifier = self.channel_directory[channel_id]
+        symbol = identifier[1]
+        payload = np.array(payload)
+        if payload.size == 0:
+            return
+            # check for data containing single entity:
+        if len(payload.shape) != 2:
+            if self.timestamp_index[symbol] < payload[0]:
+                self.timestamp_index[symbol] = payload[0]
+                payload = payload.reshape((1, -1))
+            else:
+                return
+
+        self.handle_tickers(symbol, payload)
+
+
+
     def _handle_candles(self, dtype, data, ts):
         self.log.debug("_handle_candles: %s - %s - %s", dtype, data, ts)
         channel_id, payload = data
@@ -56,15 +77,31 @@ class KieraBot(telegram.Bot, QueueProcessor):
             if self.alg.trigger_condition(symbol, ohlcv):
                 self.send_message(self.chat_id, symbol + ' changed by ' + str(self.alg.change_threshold))
 
+    def handle_tickers(self, symbol, payload):
+        payload = np.unique(payload, axis=0)
+        for ticker in payload:
+            if ticker[5] > 0.3:
+                self.send_message(self.chat_id, 'Daily price on ' + symbol + ' changed by ' + str(ticker[5]))
+
 
 if __name__ == '__main__':
-    alg = RapidMove(1.0001, 5)
+    alg = RapidMove(1.15, 5)
     bot = KieraBot('539127150:AAGFLwu3dRBiSbtjRWyJVwnmRl1n9KgD6ws', alg)
     bot.chat_id = TELEGRAM_CHAT_ID
 
     client = BtfxWss(queue_processor=bot, log_level=logging.DEBUG)
     client.start()
-    time.sleep(2)
+    time.sleep(5)
+    client.subscribe_to_ticker('BTCUSD')
+    client.subscribe_to_ticker('ETHUSD')
+    client.subscribe_to_ticker('OMGUSD')
+    client.subscribe_to_ticker('IOTUSD')
+    client.subscribe_to_ticker('LTCUSD')
+    client.subscribe_to_ticker('XMRUSD')
+    client.subscribe_to_ticker('EDOUSD')
+    client.subscribe_to_ticker('AVTUSD')
+    client.subscribe_to_ticker('ZECUSD')
+
     client.subscribe_to_candles('BTCUSD')
     client.subscribe_to_candles('ETHUSD')
     client.subscribe_to_candles('OMGUSD')
