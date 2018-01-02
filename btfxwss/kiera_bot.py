@@ -1,16 +1,16 @@
 import time
 import numpy as np
 import telegram
+from collections import defaultdict
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from btfxwss.algo.rapid_move import RapidMove
-from btfxwss.queue_processor import QueueProcessor
 from btfxwss.client import BtfxWss
-
+from btfxwss.queue_processor import QueueProcessor
 
 import logging
 
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.INFO)
+# logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+#                     level=logging.INFO)
 
 TELEGRAM_CHAT_ID = 122363776
 
@@ -25,6 +25,7 @@ class KieraBot(telegram.Bot, QueueProcessor):
         self.updater.start_polling()
         self.chat_id = None
         self.alg = alg
+        self.timestamp_index = defaultdict(int)
 
     def on_start(self, bot, update):
         self.chat_id = update.message.chat_id
@@ -57,7 +58,7 @@ class KieraBot(telegram.Bot, QueueProcessor):
 
 
 if __name__ == '__main__':
-    alg = RapidMove(1.15, 5)
+    alg = RapidMove(1.0001, 5)
     bot = KieraBot('539127150:AAGFLwu3dRBiSbtjRWyJVwnmRl1n9KgD6ws', alg)
     bot.chat_id = TELEGRAM_CHAT_ID
 
