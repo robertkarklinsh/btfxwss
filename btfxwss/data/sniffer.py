@@ -32,6 +32,9 @@ class Sniffer(QueueProcessor):
                 payload = payload.reshape((1, -1))
             else:
                 return
+        # formatting payload to [ts, o, h, l, c, v]
+        payload = payload[:, [0, 1, 3, 4, 2, 5]]
+
         for handler in self.candle_handlers:
             handler(symbol, payload)
 
@@ -44,6 +47,8 @@ if __name__ == "__main__":
     time.sleep(1)
     sniffer = Sniffer()
     sniffer.candle_handlers.append(candle_writer.write)
+
+
     client = BtfxWss(queue_processor=sniffer, log_level=logging.DEBUG)
     client.start()
     time.sleep(1)
@@ -56,10 +61,11 @@ if __name__ == "__main__":
     client.subscribe_to_candles('EDOUSD')
     client.subscribe_to_candles('AVTUSD')
     client.subscribe_to_candles('ZECUSD')
+
     try:
         while True:
             time.sleep(10)
-            candle_writer.commit()
+    #        candle_writer.commit()
     except KeyboardInterrupt as e:
         logging.debug(str(e) + '\n' + 'Exiting...')
         client.stop()
