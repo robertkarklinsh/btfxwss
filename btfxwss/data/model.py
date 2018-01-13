@@ -31,5 +31,19 @@ class OHLCV(Base):
     volume = Column(Float)
 
     def __repr__(self):
-        return "<OHLCV(timestamp='%s', symbol='%s', open='%s', high='%s', low='%s', close='%s', volume='%s')>" % (
-            self.timestamp, self.symbol, self.open, self.high, self.low, self.close, self.volume)
+        return "<OHLCV(id = '%s', timestamp='%s', symbol='%s', open='%s', high='%s', low='%s', close='%s', volume='%s')>" % (
+            self.id, self.timestamp, self.symbol, self.open, self.high, self.low, self.close, self.volume)
+
+
+class Trade(Base):
+    __tablename__ = 'trades'
+
+    id = Column(Integer, primary_key=True)
+    timestamp = Column(DateTime)
+    symbol = Column(String, ForeignKey('pairs.symbol'), primary_key=True)
+    amount = Column(Float)
+    price = Column(Float)
+
+    def __repr__(self):
+        return "<Trades(id='%s', timestamp='%s', symbol='%s', amount='%s', price='%s')>" % (
+            self.id, self.timestamp, self.symbol, self.amount, self.price)
