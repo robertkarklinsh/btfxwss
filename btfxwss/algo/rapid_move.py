@@ -15,7 +15,10 @@ class RapidMove:
         self.ohlcv_array[symbol] = np.roll(self.ohlcv_array[symbol], -1, axis=0)
         self.ohlcv_array[symbol][-1] = ohlcv
         non_zero_array = self.ohlcv_array[symbol][np.nonzero(self.ohlcv_array[symbol][:, 2])]
-        if np.amin(non_zero_array[:, 2]) * self.change_threshold < np.amax(non_zero_array[:, 2]):
-            return True
-        else:
-            return False
+        res = [False, False]
+        if non_zero_array[-1, 2] * self.change_threshold < np.amax(non_zero_array[:, 2]):
+            res[0] = True
+        if non_zero_array[-1, 2] / self.change_threshold > np.amin(non_zero_array[:, 2]):
+            res[1] = True
+        return res
+

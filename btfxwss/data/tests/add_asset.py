@@ -8,6 +8,6 @@ engine.connect()
 Session = sessionmaker(bind=engine)
 session = Session()
 
-new_asset = Pair(sid = 1, symbol='BTCUSD', start_date=datetime.date(2017, 12, 15))
+new_asset = Trade(id=1, symbol='BTCUSD', timestamp=datetime.date(2017, 12, 15), amount=100, price=14000)
 session.add(new_asset)
 session.commit()
