@@ -1,0 +1,2 @@
+model_checkpoint_path: "/home/robert/PyProjects/btfxwss/btfxwss/algo/model/model.ckpt"
+all_model_checkpoint_paths: "/home/robert/PyProjects/btfxwss/btfxwss/algo/model/model.ckpt"
