@@ -222,7 +222,8 @@
             <path>
               <item name="btfxwss" type="b2602c69:ProjectViewProjectNode" />
               <item name="btfxwss" type="462c0819:PsiDirectoryNode" />
-              <item name="backtesting" type="462c0819:PsiDirectoryNode" />
+              <item name="algo" type="462c0819:PsiDirectoryNode" />
+              <item name="model" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
