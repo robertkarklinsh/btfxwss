@@ -2,8 +2,8 @@ import os
 import backtrader as bt
 import numpy as np
 
-from backtesting.datafeed import MultiAssetDataset
-from btgym import BTgymEnv, BTgymDataset
+# from backtesting.datafeed import MultiAssetDataset
+from btgym import BTgymEnv, BTgymDataset, BTgymRandomDataDomain
 from btgym.strategy.observers import Reward, Position, NormPnL
 from btgym.algorithms import Launcher, Unreal, AacStackedRL2Policy
 from btgym.research import DevStrat_4_11
@@ -54,21 +54,28 @@ parsing_params = dict(
     openinterest=-1,
 )
 
-MyDataset = MultiAssetDataset(
-    filename=data_bitfinex,
-    symbol='OMGUSD',
-    parsing_params=parsing_params,
-    start_weekdays={0, 1, 2, 3, 4, 5, 6},
-    episode_duration={'days': 1, 'hours': 23, 'minutes': 40},  # note: 2day-long episode
-    start_00=False,
-    time_gap={'hours': 10},
-)
+# MyDataset = MultiAssetDataset(
+#     filename=data_bitfinex,
+#     symbol='OMGUSD',
+#     parsing_params=parsing_params,
+#     start_weekdays={0, 1, 2, 3, 4, 5, 6},
+#     episode_duration={'days': 1, 'hours': 23, 'minutes': 40},  # note: 2day-long episode
+#     start_00=False,
+#     time_gap={'hours': 10},
+# )
 
-ForexDataset = BTgymDataset(
+ForexDataset = BTgymRandomDataDomain(
     filename=data_forex,
+    target_period={'days': 10, 'hours': 0, 'minutes': 0},
+    trial_params=dict(
+        start_weekdays={0, 1, 2, 3, 4, 5, 6},
+        sample_duration={'days': 10, 'hours': 0, 'minutes': 0},
+        start_00=True,
+        time_gap={'days': 1, 'hours': 0},
+        test_period={'days': 2, 'hours': 0, 'minutes': 0}),
     start_weekdays={0, 1, 2, 3, 4, 5, 6},
-    episode_duration={'days': 1, 'hours': 23, 'minutes': 40}, # note: 2day-long episode
-    start_00=False,
+    episode_duration={'days': 0, 'hours': 23, 'minutes': 40},
+    start_00=True,
     time_gap={'hours': 10},
 )
 
@@ -80,7 +87,7 @@ env_config = dict(
         render_modes=['episode', 'human', 'external', 'internal'],
         render_state_as_image=True,
         render_ylabel='OHL_diff. / Internals',
-        render_size_episode=(12,8),
+        render_size_episode=(12, 8),
         render_size_human=(9, 4),
         render_size_state=(11, 3),
         render_dpi=75,
@@ -111,12 +118,12 @@ policy_config = dict(
 trainer_config = dict(
     class_ref=Unreal,
     kwargs=dict(
-        opt_learn_rate=[1e-4, 1e-4], # random log-uniform
+        opt_learn_rate=[1e-4, 1e-4],  # random log-uniform
         opt_end_learn_rate=1e-5,
-        opt_decay_steps=50*10**6,
+        opt_decay_steps=50 * 10 ** 6,
         model_gamma=0.99,
         model_gae_lambda=1.0,
-        model_beta=0.01, # entropy reg
+        model_beta=0.01,  # entropy reg
         rollout_length=20,
         time_flat=True,
         use_value_replay=False,
@@ -132,7 +139,7 @@ launcher = Launcher(
     trainer_config=trainer_config,
     policy_config=policy_config,
     test_mode=False,
-    max_env_steps=100*10**6,
+    max_env_steps=100 * 10 * 6,
     root_random_seed=0,
     purge_previous=1,  # ask to override previously saved model and logs
     verbose=2
