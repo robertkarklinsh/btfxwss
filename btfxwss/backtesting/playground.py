@@ -2,7 +2,9 @@ import os
 import backtrader as bt
 import numpy as np
 
-# from backtesting.datafeed import MultiAssetDataset
+from logbook import WARNING, INFO, DEBUG
+
+from btfxwss.backtesting.datafeed.multi_asset_dataset import MultiAssetDataset
 from btgym import BTgymEnv, BTgymDataset, BTgymRandomDataDomain
 from btgym.strategy.observers import Reward, Position, NormPnL
 from btgym.algorithms import Launcher, Unreal, AacStackedRL2Policy
@@ -22,7 +24,7 @@ MyCerebro.addstrategy(
 
 MyCerebro.broker.setcash(2000)
 MyCerebro.broker.setcommission(commission=0.0001, leverage=10.0)  # commisssion to imitate spread
-MyCerebro.addsizer(bt.sizers.SizerFix, stake=5000, )
+MyCerebro.addsizer(bt.sizers.SizerFix, stake=50, )
 
 MyCerebro.addobserver(Reward)
 MyCerebro.addobserver(Position)
@@ -34,6 +36,11 @@ data_bitfinex = [
 
 data_forex = [
     './data/DAT_ASCII_EURUSD_M1_201701.csv',
+    './data/DAT_ASCII_EURUSD_M1_201702.csv',
+    './data/DAT_ASCII_EURUSD_M1_201703.csv',
+    './data/DAT_ASCII_EURUSD_M1_201704.csv',
+    './data/DAT_ASCII_EURUSD_M1_201705.csv',
+    './data/DAT_ASCII_EURUSD_M1_201706.csv',
 ]
 
 parsing_params = dict(
@@ -54,35 +61,46 @@ parsing_params = dict(
     openinterest=-1,
 )
 
-# MyDataset = MultiAssetDataset(
-#     filename=data_bitfinex,
-#     symbol='OMGUSD',
-#     parsing_params=parsing_params,
-#     start_weekdays={0, 1, 2, 3, 4, 5, 6},
-#     episode_duration={'days': 1, 'hours': 23, 'minutes': 40},  # note: 2day-long episode
-#     start_00=False,
-#     time_gap={'hours': 10},
-# )
+BitfinexDataset = MultiAssetDataset(
+    filename=data_bitfinex,
+    symbol='OMGUSD',
+    target_period={'days': 5, 'hours': 0, 'minutes': 0},
+    trial_params=dict(
+        start_weekdays={0, 1, 2, 3, 4, 5, 6},
+        sample_duration={'days': 3, 'hours': 0, 'minutes': 0},
+        start_00=False,
+        time_gap={'days': 1, 'hours': 00},
+        test_period={'days': 1, 'hours': 0, 'minutes': 0}),
+    episode_params=dict(
+        start_weekdays={0, 1, 2, 3, 4, 5, 6},
+        sample_duration={'days': 0, 'hours': 12, 'minutes': 0},
+        time_gap={'days': 0, 'hours': 5},
+        start_00=False),
+    parsing_params=parsing_params,
+    log_level=INFO,
+)
 
 ForexDataset = BTgymRandomDataDomain(
     filename=data_forex,
     target_period={'days': 10, 'hours': 0, 'minutes': 0},
     trial_params=dict(
         start_weekdays={0, 1, 2, 3, 4, 5, 6},
-        sample_duration={'days': 10, 'hours': 0, 'minutes': 0},
-        start_00=True,
-        time_gap={'days': 1, 'hours': 0},
+        sample_duration={'days': 5, 'hours': 0, 'minutes': 0},
+        start_00=False,
+        time_gap={'days': 2, 'hours': 10},
         test_period={'days': 2, 'hours': 0, 'minutes': 0}),
-    start_weekdays={0, 1, 2, 3, 4, 5, 6},
-    episode_duration={'days': 0, 'hours': 23, 'minutes': 40},
-    start_00=True,
-    time_gap={'hours': 10},
+    episode_params=dict(
+        start_weekdays={0, 1, 2, 3, 4, 5, 6},
+        sample_duration={'days': 0, 'hours': 23, 'minutes': 40},
+        time_gap={'days': 0, 'hours': 10},
+        start_00=False),
+    log_level=INFO,
 )
 
 env_config = dict(
     class_ref=BTgymEnv,
     kwargs=dict(
-        dataset=ForexDataset,
+        dataset=BitfinexDataset,
         engine=MyCerebro,
         render_modes=['episode', 'human', 'external', 'internal'],
         render_state_as_image=True,
@@ -126,6 +144,7 @@ trainer_config = dict(
         model_beta=0.01,  # entropy reg
         rollout_length=20,
         time_flat=True,
+        episode_train_test_cycle=(10, 5),
         use_value_replay=False,
         model_summary_freq=100,
         episode_summary_freq=5,
@@ -139,7 +158,7 @@ launcher = Launcher(
     trainer_config=trainer_config,
     policy_config=policy_config,
     test_mode=False,
-    max_env_steps=100 * 10 * 6,
+    max_env_steps=100 * 10 * 1000,
     root_random_seed=0,
     purge_previous=1,  # ask to override previously saved model and logs
     verbose=2

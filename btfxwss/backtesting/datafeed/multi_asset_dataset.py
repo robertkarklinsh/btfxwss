@@ -1,10 +1,10 @@
 import os
 import pandas as pd
 import numpy as np
-from btgym import BTgymDataset
+from btgym import BTgymRandomDataDomain
 
 
-class MultiAssetDataset(BTgymDataset):
+class MultiAssetDataset(BTgymRandomDataDomain):
     """
     Support for csv files that contain ohlcv data for several symbols.
 
@@ -42,6 +42,10 @@ class MultiAssetDataset(BTgymDataset):
                     elif self.symbol == _symbol:
                         current_dataframe = data.iloc[:, 1:]
                 current_dataframe.sort_index(inplace=True)
+
+                # # Only for debugging no trades bug!
+                # current_dataframe['volume'] = 0
+
 
                 # Check and remove duplicate datetime indexes:
                 duplicates = current_dataframe.index.duplicated(keep='first')

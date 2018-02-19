@@ -34,15 +34,13 @@ class CandleWriter(object):
         '''
 
         # Check for sqllite
-        for chunk in data:
-            timestamp = datetime.datetime.fromtimestamp(chunk[0] / 1000)
-
+        for dt in data.index:
             # new_ohlcv = OHLCV(timestamp=timestamp, symbol=symbol, open=float(chunk[1]), high=float(chunk[3]),
             #                   low=float(chunk[4]), close=float(chunk[2]), volume=float(chunk[5]))
 
-            new_ohlcv = OHLCV(timestamp=timestamp, symbol=symbol, open=float(chunk[1]), high=float(chunk[2]),
-                              low=float(chunk[3]), close=float(chunk[4]), volume=float(chunk[5]))
-
+            new_ohlcv = OHLCV(timestamp=dt.to_pydatetime(), symbol=symbol, open=float(data.loc[dt, 'open']), high=float(data.loc[dt, 'high']),
+                              low=float(data.loc[dt, 'low']), close=float(data.loc[dt, 'close']),
+                              volume=float(data.loc[dt, 'volume']))
             self.session.add(new_ohlcv)
 
     def commit(self):

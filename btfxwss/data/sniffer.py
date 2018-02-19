@@ -2,7 +2,9 @@ import logging
 import time
 import numpy as np
 import pandas as pd
+import datetime
 from collections import defaultdict
+from btfxwss.utils.utils import btfx_ts_to_datetime
 from btfxwss.queue_processor import QueueProcessor
 from btfxwss.client import BtfxWss
 from sqlalchemy import create_engine
@@ -20,8 +22,11 @@ class Sniffer(QueueProcessor):
         self.candle_handlers = []
         self.book_handlers = []
         self.trade_handlers = []
-        self.timestamp_index = defaultdict(int)
-        self.payload = defaultdict(self._array_factory)
+        self.first_dt_to_write = defaultdict(lambda: None)
+        self.write_time_delta = datetime.timedelta(minutes=2)  # Must be even!
+        self.global_init_stage = True
+        self.init_stage = defaultdict(self._true_default_dict_factory)
+        self.payload = None
 
     def _handle_candles(self, dtype, data, ts):
         self.log.debug("_handle_candles: %s - %s - %s", dtype, data, ts)
@@ -31,24 +36,23 @@ class Sniffer(QueueProcessor):
         payload = np.array(payload)
         if payload.size == 0:
             return
-        # check that data is not historical and then write candle when newer one arrives
+        # check that data is not historical
         if len(payload.shape) != 2:
-            if self.timestamp_index[symbol] == 0:
-                self.timestamp_index[symbol] = payload[0]
-                self.payload[symbol] = payload
-            if self.timestamp_index[symbol] == payload[0]:
-                self.payload[symbol] = payload
-            if self.timestamp_index[symbol] < payload[0]:
-                self.timestamp_index[symbol] = payload[0]
-                self.payload[symbol] = self.payload[symbol].reshape((1, -1))
-                # formatting payload to [[ts, o, h, l, c, v]]
-                self.payload[symbol] = self.payload[symbol][:, [0, 1, 3, 4, 2, 5]]
-                for handler in self.candle_handlers:
-                    handler(symbol, self.payload[symbol])
-                self.payload[symbol] = payload
+            data_dt = btfx_ts_to_datetime(payload[0])
+            if self.global_init_stage:
+                self.payload = defaultdict(self._df_factory(data_dt))
+                self.global_init_stage = False
+            if self.init_stage[symbol]:
+                self.first_dt_to_write[symbol] = data_dt
+                self.init_stage[symbol] = False
+            else:
+                self.payload[symbol].loc[data_dt] = payload[[1, 3, 4, 2, 5]]
 
-                # TODO Fix missing candles with DateTime index
-                # TODO handle historical candles at the beginning of connection
+            if data_dt > self.first_dt_to_write[symbol] + self.write_time_delta:
+                last_dt_to_write = data_dt - self.write_time_delta / 2
+                for handler in self.candle_handlers:
+                    handler(symbol, self.payload[symbol].loc[self.first_dt_to_write[symbol]:last_dt_to_write])
+                self.first_dt_to_write[symbol] = last_dt_to_write + datetime.timedelta(minutes=1)
 
     def _handle_raw_book(self, dtype, data, ts):
         self.log.debug("_handle_candles: %s - %s - %s", dtype, data, ts)
@@ -93,8 +97,18 @@ class Sniffer(QueueProcessor):
             for handler in self.trade_handlers:
                 handler.write_entity(symbol, payload)
 
-    def _array_factory(self):
-        return np.zeros(6)
+    def _true_default_dict_factory(self):
+        return True
+
+    def _df_factory(self, start_dt):
+        def callable():
+            return pd.DataFrame(
+                index=pd.date_range(start_dt - datetime.timedelta(minutes=5), start_dt + datetime.timedelta(360),
+                                    freq='Min'),
+                columns=['open', 'high', 'low', 'close', 'volume'],
+                dtype=np.float32)
+
+        return callable
 
 
 if __name__ == "__main__":
@@ -121,23 +135,23 @@ if __name__ == "__main__":
     client.subscribe_to_candles('AVTUSD')
     client.subscribe_to_candles('ZECUSD')
     client.subscribe_to_candles('XRPUSD')
-
-    client.subscribe_to_trades('BTCUSD')
-    client.subscribe_to_trades('ETHUSD')
-    client.subscribe_to_trades('OMGUSD')
-    client.subscribe_to_trades('IOTUSD')
-    client.subscribe_to_trades('LTCUSD')
-    client.subscribe_to_trades('XMRUSD')
-    client.subscribe_to_trades('EDOUSD')
-    client.subscribe_to_trades('AVTUSD')
-    client.subscribe_to_trades('ZECUSD')
-    client.subscribe_to_trades('XRPUSD')
+    #
+    # client.subscribe_to_trades('BTCUSD')
+    # client.subscribe_to_trades('ETHUSD')
+    # client.subscribe_to_trades('OMGUSD')
+    # client.subscribe_to_trades('IOTUSD')
+    # client.subscribe_to_trades('LTCUSD')
+    # client.subscribe_to_trades('XMRUSD')
+    # client.subscribe_to_trades('EDOUSD')
+    # client.subscribe_to_trades('AVTUSD')
+    # client.subscribe_to_trades('ZECUSD')
+    # client.subscribe_to_trades('XRPUSD')
 
     try:
         while True:
-            time.sleep(10)
+            time.sleep(30)
             candle_writer.commit()
-            trade_writer.commit()
+ #           trade_writer.commit()
     except KeyboardInterrupt as e:
         logging.debug(str(e) + '\n' + 'Exiting...')
         client.stop()

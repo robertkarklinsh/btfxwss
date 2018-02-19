@@ -21,8 +21,7 @@ class Pair(Base):
 class OHLCV(Base):
     __tablename__ = 'ohlcv'
 
-    id = Column(Integer, primary_key=True)
-    timestamp = Column(DateTime)
+    timestamp = Column(DateTime, primary_key=True)
     symbol = Column(String, ForeignKey('pairs.symbol'))
     open = Column(Float)
     high = Column(Float)
