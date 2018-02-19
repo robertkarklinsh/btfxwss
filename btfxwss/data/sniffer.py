@@ -23,7 +23,7 @@ class Sniffer(QueueProcessor):
         self.book_handlers = []
         self.trade_handlers = []
         self.first_dt_to_write = defaultdict(lambda: None)
-        self.write_time_delta = datetime.timedelta(minutes=2)  # Must be even!
+        self.write_time_delta = datetime.timedelta(minutes=10)  # Must be even!
         self.global_init_stage = True
         self.init_stage = defaultdict(self._true_default_dict_factory)
         self.payload = None
@@ -39,17 +39,24 @@ class Sniffer(QueueProcessor):
         # check that data is not historical
         if len(payload.shape) != 2:
             data_dt = btfx_ts_to_datetime(payload[0])
+            cur_datetime = datetime.datetime.fromtimestamp(time.time())
+            cur_datetime = cur_datetime.replace(second=0, microsecond=0)
             if self.global_init_stage:
-                self.payload = defaultdict(self._df_factory(data_dt))
+                self.payload = defaultdict(self._df_factory(cur_datetime))
                 self.global_init_stage = False
             if self.init_stage[symbol]:
                 self.first_dt_to_write[symbol] = data_dt
                 self.init_stage[symbol] = False
-            else:
-                self.payload[symbol].loc[data_dt] = payload[[1, 3, 4, 2, 5]]
+            try:
+                assert data_dt >= self.payload[symbol].index[0].to_pydatetime()
+            except AssertionError:
+                return
+            self.payload[symbol].loc[data_dt] = payload[[1, 3, 4, 2, 5]]
 
-            if data_dt > self.first_dt_to_write[symbol] + self.write_time_delta:
-                last_dt_to_write = data_dt - self.write_time_delta / 2
+            if cur_datetime > self.first_dt_to_write[symbol] + self.write_time_delta:
+
+                # last_dt_to_write = self.payload[symbol][self.payload[symbol]['open'] > 0].index[0]
+                last_dt_to_write = cur_datetime - self.write_time_delta / 2
                 for handler in self.candle_handlers:
                     handler(symbol, self.payload[symbol].loc[self.first_dt_to_write[symbol]:last_dt_to_write])
                 self.first_dt_to_write[symbol] = last_dt_to_write + datetime.timedelta(minutes=1)
@@ -103,7 +110,7 @@ class Sniffer(QueueProcessor):
     def _df_factory(self, start_dt):
         def callable():
             return pd.DataFrame(
-                index=pd.date_range(start_dt - datetime.timedelta(minutes=5), start_dt + datetime.timedelta(360),
+                index=pd.date_range(start_dt, start_dt + datetime.timedelta(360),
                                     freq='Min'),
                 columns=['open', 'high', 'low', 'close', 'volume'],
                 dtype=np.float32)
@@ -151,7 +158,7 @@ if __name__ == "__main__":
         while True:
             time.sleep(30)
             candle_writer.commit()
- #           trade_writer.commit()
+            #           trade_writer.commit()
     except KeyboardInterrupt as e:
         logging.debug(str(e) + '\n' + 'Exiting...')
         client.stop()
